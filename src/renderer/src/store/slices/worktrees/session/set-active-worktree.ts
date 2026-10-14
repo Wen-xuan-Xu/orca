@@ -25,7 +25,8 @@ import {
 import { persistPassiveWorktreeMetaForOwner } from '../listing/worktree-owner-settings'
 import { resolveActivatedWorktreeSurface } from './active-worktree-surface'
 import { clearWorktreeSleepIntent } from '@/lib/worktree-sleep-intent'
-import { withWorkspaceChatsSleptAt } from '../../tabs/tabs-chat-sleep-actions'
+import { withSelectedHostChatsAwake } from '../../tabs/tabs-chat-sleep-actions'
+import { getResolvedExecutionHostIdForWorktree } from '@/lib/resolved-worktree-execution-host'
 import {
   pendingActivationTerminalPrepCancels,
   shouldDeferActivationTerminalPrep
@@ -160,10 +161,10 @@ export function createSetActiveWorktree(
             }
           : {}
       // Why: any activation wakes the workspace's chats, as it does its terminals.
-      const nextUnifiedTabs = withWorkspaceChatsSleptAt(
+      const nextUnifiedTabs = withSelectedHostChatsAwake(
         s.unifiedTabsByWorktree,
         worktreeId,
-        undefined
+        executionHostId ?? getResolvedExecutionHostIdForWorktree(s, worktreeId) ?? undefined
       )
 
       const nextActiveTabTypeByWorktree =

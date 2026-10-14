@@ -139,7 +139,7 @@ describe('hasSleepableWorkspaceActivity', () => {
     ).toBe(true)
   })
 
-  it('offers Sleep for a chat-only workspace', () => {
+  it('offers Sleep for a chat-only workspace even when its chat is marked slept', () => {
     const chat: Tab = {
       id: 'chat-1',
       entityId: 'session-1',
@@ -158,7 +158,7 @@ describe('hasSleepableWorkspaceActivity', () => {
         tabsByWorktree: {},
         ptyIdsByTabId: {},
         browserTabsByWorktree: {},
-        unifiedTabsByWorktree: { 'wt-1': [chat] },
+        unifiedTabsByWorktree: { 'wt-1': [{ ...chat, sleptAt: 1 }] },
         chatOwnerState: {
           worktreesByRepo: {
             'repo-1': [{ id: 'wt-1', repoId: 'repo-1', hostId: 'local' }]

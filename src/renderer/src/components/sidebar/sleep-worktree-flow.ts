@@ -23,6 +23,7 @@ import {
   findIndexedProjectGroupOwner
 } from '@/lib/worktree-runtime-owner-index'
 import { getFolderWorkspaceHostId } from './folder-workspace-host-id'
+import { isStructuredTab } from '@/components/native-chat/structured-agent-session-tabs'
 import type { AppState } from '@/store/types'
 
 export type WorkspaceSleepTarget =
@@ -170,6 +171,11 @@ export async function runSleepWorktrees(
     seen.add(key)
     return [selected]
   })
+  const capturedChats = resolved.map(({ workspaceId, executionHostId }) =>
+    (state.unifiedTabsByWorktree[workspaceId] ?? [])
+      .filter((tab) => isStructuredTab(tab) && tab.executionHostId === executionHostId)
+      .map((tab) => ({ tabId: tab.id, sessionId: tab.entityId, executionHostId }))
+  )
   const marked = resolved.map((target) => ({
     ...target,
     token: markWorktreeSleepIntent(target.workspaceId, target.executionHostId)
@@ -282,10 +288,17 @@ export async function runSleepWorktrees(
       { description: [...new Set(errors)].join('\n') }
     )
   }
-  return results.map((result, index) => ({
-    ...result,
-    completed:
+  return results.map((result, index) => {
+    const completed =
       result.completed &&
       isCurrentWorktreeSleepIntent(result.workspaceId, result.executionHostId, marked[index].token)
-  }))
+    if (completed) {
+      const stopped = new Set(result.stoppedSessionIds)
+      const chats = capturedChats[index].filter((chat) => stopped.has(chat.sessionId))
+      if (chats.length > 0) {
+        useAppStore.getState().setWorkspaceChatsSleptAt(result.workspaceId, chats, Date.now())
+      }
+    }
+    return { ...result, completed }
+  })
 }
